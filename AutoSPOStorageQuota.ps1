@@ -1,11 +1,12 @@
-# detailed report on all SPO sites to CSV
+# script monitors SPO sites storage usage vs storage quota 
+# expected "Site Collection Storage Management" set to manual (there are storage quotas for each site)
 
 $passwordPath = "C:\Users\$env:USERNAME\Documents\scripts\cred"
 $reportDataPath = "C:\Users\$env:USERNAME\Documents\reports\SPO"
 $adminUPN = "SPO_Admin@kar1.onmicrosoft.com"
 $adminUrl = "https://kar1-admin.sharepoint.com"
-$storageLimit   = 25 # MB
-$storageWarning = 20 # MB
+$storageAbsoluteLimit   = 25 # MB; no sites bigger than that allowed in tenant 
+$storageAbsoluteWarning = 20 # MB; send warning that site is close to absolute limit
 
 #Get-ExecutionPolicy
 #Set-ExecutionPolicy RemoteSigned
@@ -68,12 +69,15 @@ foreach ($s in $sites) {
     $siteReport | Add-Member -Type NoteProperty -Name "SiteStatus" -Value $site.Status
     $siteReport | Add-Member -Type NoteProperty -Name "Owner" -Value $site.Owner
     $siteReport | Add-Member -Type NoteProperty -Name "SiteStorageQuota" -Value $site.StorageQuota
-    $siteReport | Add-Member -Type NoteProperty -Name "LastContentModifiedDate" -Value $site.LastContentModifiedDate
+    $siteReport | Add-Member -Type NoteProperty -Name "StorageQuotaWarningLevel" -Value $site.StorageQuotaWarningLevel
+    #$siteReport | Add-Member -Type NoteProperty -Name "StorageQuotaType" -Value $site.StorageQuotaType
+    #$siteReport | Add-Member -Type NoteProperty -Name "LastContentModifiedDate" -Value $site.LastContentModifiedDate
     $siteReport | Add-Member -Type NoteProperty -Name "SiteTemplate" -Value $site.Template
-    
-    $siteReport | Add-Member -Type NoteProperty -Name "ResourceUsageAverage" -Value $site.ResourceUsageAverage
+        
+    #$siteReport | Add-Member -Type NoteProperty -Name "ResourceUsageAverage" -Value $site.ResourceUsageAverage
     $siteReport | Add-Member -Type NoteProperty -Name "StorageUsageCurrent" -Value $site.StorageUsageCurrent
     $siteReport | Add-Member -Type NoteProperty -Name "LockIssue" -Value $site.LockIssue
+    $siteReport | Add-Member -Type NoteProperty -Name "AllowEditing" -Value $site.AllowEditing
     
     $sitesReport += $siteReport
 }
@@ -89,11 +93,25 @@ Write-Host ($time3-$time2)
 Write-Host ($time4-$time1)
 
 #return
+Write-Host "All sites:"
 $sitesReport | ft -AutoSize
 
-$sitesAtRisk = $sitesReport | ?{$_.StorageUsageCurrent -gt $storageWarning}
+Write-Host "Sites with storage bigger than absolute limit ($storageAbsoluteLimit) MB :" -fore Yellow
+$sitesAtRisk = $sitesReport | ?{$_.StorageUsageCurrent -gt $storageAbsoluteWarning}
 $sitesAtRisk | ft -AutoSize
 
+Write-Host "Sites with storage bigger than site StorageQuotaWarningLevel:" -fore Yellow
+$sitesAtRisk = $sitesReport | ?{$_.StorageUsageCurrent -gt $_.StorageQuotaWarningLevel -and $_.StorageQuotaWarningLevel -ne 0}
+$sitesAtRisk | ft -AutoSize
+
+Write-Host "Sites with StorageQuotaWarningLevel not set:" -fore Yellow
+$sitesAtRisk = $sitesReport | ?{$_.StorageQuotaWarningLevel -lt 1}
+$sitesAtRisk | ft -AutoSize
+
+
+
+return
+$site | fl
 
 
 
