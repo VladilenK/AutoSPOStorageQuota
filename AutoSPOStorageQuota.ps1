@@ -8,11 +8,9 @@ $adminUrl = "https://kar1-admin.sharepoint.com"
 $storageAbsoluteLimit   = 25 # MB; no sites bigger than that allowed in tenant 
 $storageAbsoluteWarning = 20 # MB; send warning that site is close to absolute limit
 
-
 #Get-ExecutionPolicy
 #Set-ExecutionPolicy RemoteSigned
 #Set-ExecutionPolicy RemoteSigned
-
 
 if (Test-Path "$env:CommonProgramFiles\Microsoft Shared\Web Server Extensions\16\ISAPI\Microsoft.SharePoint.Client.dll") {
     Add-Type -Path (Resolve-Path "$env:CommonProgramFiles\Microsoft Shared\Web Server Extensions\16\ISAPI\Microsoft.SharePoint.Client.dll")
